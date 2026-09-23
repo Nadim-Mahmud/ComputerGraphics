@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My First Rendering Algo</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #050510;
+        color: white;
+        font-family: Arial, sans-serif;
+      }
+
+      canvas {
+        display: block;
+      }
+
+      #info {
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        padding: 12px 14px;
+        background: rgba(0, 0, 0, 0.6);
+        border-radius: 8px;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <div id="info"><b>Pixel grid test</b><br /></div>
+
+    <script>
+      //we add shapes (like lines) to this canvas
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+
+      const rows = 200;
+      const cols = 320;
+      const pixelGrid = Array.from({ length: cols }, () =>
+        Array(rows).fill("#050510"),
+      );
+
+      let seePixelOutline = true;
+
+      //light up a couple of pixels
+      setPixelColor(100, 100, "#FFFFFF");
+      setPixelColor(100, 101, "#FFFFFF");
+      setPixelColor(101, 100, "#FFFFFF");
+      setPixelColor(101, 101, "#FFFFFF");
+      setPixelColor(102, 101, "#FFFFFF");
+
+      makePixelatedLine(50, 90, 100, 50, "#00FF00");
+      // makePixelatedLine(20, 20, 100, 80, "#FF0000");
+
+      function draw() {
+        //here we set up and clear the canvas, every draw frame
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#050510";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "#444444";
+
+        for (v = 0; v < 200; v++) {
+          for (u = 0; u < 320; u++) {
+            //if you want to see what is going on
+            // console.log(u);
+            // console.log(v);
+            // console.log(pixelGrid[u][v]);
+            // console.log("----")
+
+            ctx.fillStyle = pixelGrid[u][v];
+            ctx.fillRect(u * 5, v * 5, 5, 5);
+
+            if (seePixelOutline) {
+              ctx.strokeRect(u * 5, v * 5, 5, 5);
+            }
+          }
+        }
+      }
+
+      function setPixelColor(u, v, color) {
+        pixelGrid[u][v] = color;
+      }
+
+      function makePixelatedLine(u1, v1, u2, v2, color) {
+        //******** TO DO
+        //use the algorithm in the slides to incrementally fill
+        // in pixels going from u1,v1 to u2,v2
+        // you can use 'setPixelColor'
+        // note, you may need to handle 'cases'- ex.u1>u2 vs u2>u2
+
+        const du = u2 - u1;
+        const dv = v2 - v1;
+        const steps = Math.max(Math.abs(du), Math.abs(dv));
+
+        if (steps === 0) {
+          if (u1 >= 0 && u1 < cols && v1 >= 0 && v1 < rows) {
+            setPixelColor(u1, v1, color); // Only that pixel
+          }
+
+          return;
+        }
+
+        const uStep = du / steps;
+        const vStep = dv / steps;
+
+        let u = u1;
+        let v = v1;
+
+        for (let i = 0; i <= steps; i++) {
+          const pixelU = Math.round(u);
+          const pixelV = Math.round(v);
+
+          if (pixelU >= 0 && pixelU < cols && pixelV >= 0 && pixelV < rows) {
+            setPixelColor(pixelU, pixelV, color);
+          }
+
+          u += uStep;
+          v += vStep;
+        }
+      }
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        draw();
+      }
+
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
+    </script>
+  </body>
+</html>
