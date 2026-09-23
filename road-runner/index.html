@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Road Runner</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <header>
+      <h2>Road Runner</h2>
+      <p>Created by: Nadim Mahmud</p>
+
+      <nav aria-label="Rendering modes">
+        <div class="modes">
+          <button class="mode-button" type="button" id="btn_cube" data-mode="0" aria-pressed="true">
+            Cube
+          </button>
+          <button
+            class="mode-button"
+            type="button"
+            id="btn_wireframe"
+            data-mode="1"
+            aria-pressed="false"
+          >
+            Wireframe
+          </button>
+          <button
+            class="mode-button"
+            type="button"
+            id="btn_300x200"
+            data-mode="2"
+            aria-pressed="false"
+          >
+            300 x 200 px
+          </button>
+          <button
+            class="mode-button"
+            type="button"
+            id="btn_triangle_fill"
+            data-mode="3"
+            aria-pressed="false"
+          >
+            Triangle Fill
+          </button>
+        </div>
+        <button class="mode-button" type="button" id="btn_reset">Reset</button>
+      </nav>
+    </header>
+
+    <main class="canvas-area">
+      <canvas id="canvas" aria-label="Interactive 3D rendering"></canvas>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
