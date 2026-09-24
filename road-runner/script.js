@@ -237,8 +237,8 @@ const roadModel = {
     vertices: [
         { x: -4, y: 0, z: -5 }, // 0
         { x:  4, y: 0, z: -5 }, // 1
-        { x: -4, y: 0, z: 110 }, // 2
-        { x:  4, y: 0, z: 110 }  // 3
+        { x: -4, y: 0, z: 150 }, // 2
+        { x:  4, y: 0, z: 150 }  // 3
     ],
 
     edges: [
@@ -572,7 +572,7 @@ function createScene() {
     });
 
     // Lane dividers
-    for (let z = 0; z <= 100; z += 10) {
+    for (let z = 0; z <= 150; z += 10) {
 
         scene.push({
             model: laneModel,
