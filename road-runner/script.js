@@ -5,6 +5,8 @@ const ctx = canvas.getContext("2d");
 let WIDTH = 320;
 const HEIGHT = 200;
 
+const FPS = 30;
+
 let PIXEL_SIZE = 5;
 
 canvas.width = WIDTH * PIXEL_SIZE;
@@ -12,6 +14,12 @@ canvas.height = HEIGHT * PIXEL_SIZE;
 
 let activeButtonId = "btn_cube";
 
+let speed = 0.5;
+let maxSpeed = 2;
+
+function showSpeed() {
+    document.getElementById("speedInfo").textContent = `Speed: ${speed.toFixed(1)}`;
+}
 
 let cubeCamera = {
     x: 0,
@@ -21,7 +29,7 @@ let cubeCamera = {
 
 const gameCamera = {
     x: 0,
-    y: 2,
+    y: 5,
     z: -10
 };
 
@@ -111,14 +119,6 @@ function drawWireframe(vertices, edges, color, camera) {
         );
 
         if (p1 === null || p2 === null) {
-            continue;
-        }
-
-        if (activeButtonId === "btn_wireframe") {
-            ctx.beginPath();
-            ctx.moveTo(p1.u * PIXEL_SIZE, p1.v * PIXEL_SIZE);
-            ctx.lineTo(p2.u * PIXEL_SIZE, p2.v * PIXEL_SIZE);
-            ctx.stroke();
             continue;
         }
 
@@ -219,7 +219,407 @@ function updateCubeCamera(keys) {
 }
 
 
+// Wireframe drawing models
 
+const roadModel = {
+
+    vertices: [
+        { x: -4, y: 0, z: -5 }, // 0
+        { x:  4, y: 0, z: -5 }, // 1
+        { x: -4, y: 0, z: 110 }, // 2
+        { x:  4, y: 0, z: 110 }  // 3
+    ],
+
+    edges: [
+        [0, 1],
+        [1, 3],
+        [3, 2],
+        [2, 0]
+    ],
+
+    color: "#666666"
+};
+
+
+const laneModel = {
+
+    vertices: [
+        { x: 0, y: 0, z: -1 },
+        { x: 0, y: 0, z:  1 }
+    ],
+
+    edges: [
+        [0, 1]
+    ],
+
+    color: "#FFFFFF"
+};
+
+
+const treeModel = {
+    vertices: [
+        // Cube base: 1 unit wide, tall, and deep, resting on the ground.
+        { x: -0.5, y: 0, z: -0.5 }, // 0
+        { x:  0.5, y: 0, z: -0.5 }, // 1
+        { x:  0.5, y: 1, z: -0.5 }, // 2
+        { x: -0.5, y: 1, z: -0.5 }, // 3
+        { x: -0.5, y: 0, z:  0.5 }, // 4
+        { x:  0.5, y: 0, z:  0.5 }, // 5
+        { x:  0.5, y: 1, z:  0.5 }, // 6
+        { x: -0.5, y: 1, z:  0.5 }, // 7
+
+        // Square pyramid canopy: four base corners and one centered apex.
+        { x: -1, y: 1, z: -1 }, // 8
+        { x:  1, y: 1, z: -1 }, // 9
+        { x:  1, y: 1, z:  1 }, // 10
+        { x: -1, y: 1, z:  1 }, // 11
+        { x:  0, y: 4, z:  0 }  // 12
+    ],
+    edges: [
+        // Cube faces and connecting edges.
+        [0, 1], [1, 2], [2, 3], [3, 0],
+        [4, 5], [5, 6], [6, 7], [7, 4],
+        [0, 4], [1, 5], [2, 6], [3, 7],
+
+        // Square base and four edges leading to the apex.
+        [8, 9], [9, 10], [10, 11], [11, 8],
+        [8, 12], [9, 12], [10, 12], [11, 12]
+    ],
+    color: "#228B22"
+};
+
+
+const mountainModel = {
+    vertices: [
+        // Keep the front base edge on the mountain line where the road ends.
+        { x: -3, y: 0, z: 0 }, // 0
+        { x:  3, y: 0, z: 0 }, // 1
+        { x:  3, y: 0, z: 6 }, // 2
+        { x: -3, y: 0, z: 6 }, // 3
+        { x:  0, y: 4, z: 3 }  // 4: apex above the square's center
+    ],
+    edges: [
+        [0, 1], [1, 2], [2, 3], [3, 0],
+        [0, 4], [1, 4], [2, 4], [3, 4]
+    ],
+    color: "#64748B"
+};
+
+
+const carModel = {
+
+    vertices: [
+
+        // Car body
+
+        // Rear face 
+        { x: -1, y: 0, z: -2 }, // 0
+        { x:  1, y: 0, z: -2 }, // 1
+        { x: -1, y: 1, z: -2 }, // 2
+        { x:  1, y: 1, z: -2 }, // 3
+
+        // Front face
+        { x: -1, y: 0, z: 2 }, // 4
+        { x:  1, y: 0, z: 2 }, // 5
+        { x: -1, y: 1, z: 2 }, // 6
+        { x:  1, y: 1, z: 2 }, // 7
+
+
+        // tiangle like roofs
+
+        // Rear roof base (Y = 1)
+        { x: -0.8, y: 1, z: -1.2 }, // 8
+        { x:  0.8, y: 1, z: -1.2 }, // 9
+
+        // Rear roof top (Y = 2)
+        { x: -0.6, y: 2, z: -0.7 }, // 10
+        { x:  0.6, y: 2, z: -0.7 }, // 11
+
+        // Front roof top (Y = 2)
+        { x: -0.6, y: 2, z: 0.7 }, // 12
+        { x:  0.6, y: 2, z: 0.7 }, // 13
+
+        // Front roof base (Y = 1)
+        { x: -0.8, y: 1, z: 1.2 }, // 14
+        { x:  0.8, y: 1, z: 1.2 }, // 15
+
+
+        // Rear lights
+
+        // Left rear light
+        { x: -0.9, y: 0.3, z: -2.01 }, // 16
+        { x: -0.6, y: 0.3, z: -2.01 }, // 17
+        { x: -0.9, y: 0.7, z: -2.01 }, // 18
+        { x: -0.6, y: 0.7, z: -2.01 }, // 19
+
+        // Right rear light
+        { x: 0.6, y: 0.3, z: -2.01 }, // 20
+        { x: 0.9, y: 0.3, z: -2.01 }, // 21
+        { x: 0.6, y: 0.7, z: -2.01 }, // 22
+        { x: 0.9, y: 0.7, z: -2.01 }  // 23
+    ],
+
+    edges: [
+
+        // BODY: rear face
+        [0, 1], [1, 3], [3, 2], [2, 0],
+
+        // BODY: front face
+        [4, 5], [5, 7], [7, 6], [6, 4],
+
+        // BODY: connecting edges
+        [0, 4], [1, 5], [2, 6], [3, 7],
+
+
+        // ROOF: rear windshield
+        [8, 9], [9, 11], [11, 10], [10, 8],
+
+        // ROOF: top
+        [10, 11], [11, 13], [13, 12], [12, 10],
+
+        // ROOF: front windshield
+        [12, 13], [13, 15], [15, 14], [14, 12],
+
+        // ROOF: lower side connections
+        [8, 14], [9, 15],
+
+
+        // LEFT REAR LIGHT
+        [16, 17], [17, 19], [19, 18], [18, 16],
+
+        // RIGHT REAR LIGHT
+        [20, 21], [21, 23], [23, 22], [22, 20]
+    ],
+
+    color: "#2563EB"
+};
+
+
+function transformVertex(vertex, position, scale) {
+
+    return {
+        x: vertex.x * scale + position.x,
+        y: vertex.y * scale + position.y,
+        z: vertex.z * scale + position.z
+    };
+}
+
+
+let scene = [];
+
+function createScene() {
+
+    scene = [];
+
+    scene.push({
+        model: roadModel,
+        position: { x: 0, y: 0, z: 0 },
+        scale: 1,
+        color: "#666666",
+        type: "road"
+    });
+
+    // Lane dividers
+    for (let z = 0; z <= 100; z += 10) {
+
+        scene.push({
+            model: laneModel,
+            position: { x: 0, y: 0.02, z: z },
+            scale: 1,
+            color: "#FFFFFF",
+            type: "lane"
+        });
+    }
+
+    // Trees
+    for (let z = 5; z <= 95; z += 10) {
+
+        scene.push({
+            model: treeModel,
+            position: { x: -7, y: 0, z: z },
+            scale: 1,
+            color: "#228B22",
+            type: "tree"
+        });
+
+        scene.push({
+            model: treeModel,
+            position: { x: 7, y: 0, z: z },
+            scale: 1.5,
+            color: "#228B22",
+            type: "tree"
+        });
+    }
+
+
+    scene.push({
+        model: mountainModel,
+        position: { x: -25, y: 0, z: 110 },
+        scale: 8,
+        color: "#64748B",
+        type: "mountain"
+    });
+
+    scene.push({
+        model: mountainModel,
+        position: { x: -80, y: 0, z: 110 },
+        scale: 10,
+        color: "#64748B",
+        type: "mountain"
+    });
+
+    scene.push({
+        model: mountainModel,
+        position: { x: 34, y: 0, z: 110 },
+        scale: 10,
+        color: "#64748B",
+        type: "mountain"
+    });
+
+    scene.push({
+        model: mountainModel,
+        position: { x: 84, y: 0, z: 110 },
+        scale: 8,
+        color: "#64748B",
+        type: "mountain"
+    });
+
+    // Player car
+    scene.push({
+        model: carModel,
+        position: { x: -2, y: 0, z: 3 },
+        scale: 0.8,
+        color: "#2563EB",
+        type: "player"
+    });
+}
+
+
+function drawGameWireframe() {
+
+    clearCanvas();
+
+    for (const object of scene) {
+
+        // Transform vertices into scaled world coordinates
+        const worldVertices =
+            object.model.vertices.map(vertex =>
+                transformVertex(
+                    vertex,
+                    object.position,
+                    object.scale
+                )
+            );
+
+        // Draw using existing wireframe renderer
+        drawWireframe(
+            worldVertices,
+            object.model.edges,
+            object.color,
+            gameCamera
+        );
+    }
+
+}
+
+
+function animateWireframeScene() {
+
+    for (const object of scene) {
+
+        // Move trees and lane markings only
+        if (
+            object.model === treeModel ||
+            object.model === laneModel
+        ) {
+
+            object.position.z -= speed;
+
+            // When an object passes the camera,
+            // move it back to the far end of the road.
+            if (object.position.z < gameCamera.z) {
+
+                object.position.z += Math.ceil((gameCamera.z - object.position.z) / 100) * 100;
+
+            }
+        }
+    }
+
+    drawGameWireframe();
+}
+
+
+function wireFrameAnimationController(key) {
+
+    const car = scene.find(
+        object => object.model === carModel
+    );
+
+    if (!car) return;
+
+    if (key === "KeyA") {
+    car.position.x -= 0.2;
+    }
+
+    if (key === "KeyD") {
+    car.position.x += 0.2;
+    }
+
+    if (key === "KeyW") {
+    speed = Math.min(maxSpeed, speed + 0.1);
+    }
+
+    if (key === "KeyS") {
+    speed = Math.max(0.5, speed - 0.1);
+    }
+
+    // Keep the car inside the road
+    car.position.x = Math.max(
+        -3,
+        Math.min(3, car.position.x)
+    );
+}
+
+
+function resetWireframe() {
+    gameCamera.x = 0;
+    gameCamera.y = 5;
+    gameCamera.z = -10;
+    createScene();
+    drawGameWireframe();
+}
+
+
+function updateGameCamera(input) {
+
+    switch (Object.keys(input)[0]) {
+        case "ArrowUp":
+            gameCamera.z += 0.1;
+            break;
+        case "ArrowDown":
+            gameCamera.z -= 0.1;
+            break;
+        case "ArrowLeft":
+            gameCamera.x -= 0.1;
+            break;
+        case "ArrowRight":
+            gameCamera.x += 0.1;
+            break;
+        case "KeyR":
+            gameCamera.x = 0;
+            gameCamera.y = 5;
+            gameCamera.z = -10;
+            break;
+    }
+
+}
+
+
+// One loop owns animation; drawing and input handlers never start timers.
+function animate(animationMethod){
+    animationMethod();
+    requestAnimationFrame(() => animate(animationMethod));
+}
 
 // Canvas and navigation control
 function fitCanvas() {
@@ -233,12 +633,16 @@ function setMode(nextMode) {
     clearCanvas();
     
     activeButtonId = nextMode !== "btn_reset" ? nextMode : activeButtonId;
+    lastFrameTime = null;
+    accumulatedTime = 0;
 
     switch (nextMode) {
         case "btn_cube":
             drawCube();
             break;  
         case "btn_wireframe":
+            createScene();
+            animate(animateWireframeScene);
             break;
         case "btn_300x200":
             break;
@@ -248,7 +652,9 @@ function setMode(nextMode) {
             clearCanvas();
 
             if (activeButtonId === "btn_cube") resetCube();
-                break;
+            else if (activeButtonId === "btn_wireframe") resetWireframe();
+            break;
+
         default:
             return;
     }
@@ -266,11 +672,27 @@ document.querySelectorAll("button.mode-button").forEach(button => {
 });
 
 document.addEventListener("keydown", event => {
+    if (event.target?.matches("input, textarea, select, [contenteditable]")) return;
+
+    event.preventDefault();
+
+
     if (event.code.startsWith("Arrow")) {
-        event.preventDefault();
-        updateCubeCamera({ [event.code]: true });
-        drawCube();
+
+        if (activeButtonId === "btn_cube") {
+            updateCubeCamera({ [event.code]: true });
+            drawCube();
+        }
+        else {
+            updateGameCamera({ [event.code]: true });
+        }
     }
+
+    if (activeButtonId === "btn_wireframe") {
+        wireFrameAnimationController(event.code);
+        showSpeed();
+    }
+    
 });
 
 new ResizeObserver(fitCanvas).observe(document.querySelector(".canvas-area"));

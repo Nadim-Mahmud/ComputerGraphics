@@ -55,3 +55,5 @@ canvas.pixelated { image-rendering: pixelated; }
     nav { margin: 4px 0; }
     button { padding: 5px 10px; }
 }
+
+#speedInfo { align-self: center; font-size: 14px; min-width: 75px; }
