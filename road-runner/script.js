@@ -34,11 +34,9 @@ const gameCamera = {
 };
 
 
-const FOCAL_LENGTH = 200;
-
 // Reusable functions for 3D projection and drawing wireframes
 
-function project(vertex, camera) {
+function project(vertex, camera, viewWidth = canvas.width, viewHeight = canvas.height) {
 
     const x = vertex.x - camera.x;
     const y = vertex.y - camera.y;
@@ -50,11 +48,8 @@ function project(vertex, camera) {
         return null;
     }
 
-    const u =
-        FOCAL_LENGTH * x / z + WIDTH / 2;
-
-    const v =
-        HEIGHT / 2 - FOCAL_LENGTH * y / z;
+    const u = (x / z) * viewHeight + viewWidth / 2;
+    const v = viewHeight / 2 - (y / z) * viewHeight;
 
     return {
         u: u,
@@ -63,7 +58,7 @@ function project(vertex, camera) {
     };
 }
 
-function drawLine(u1, v1, u2, v2, color = "#FFFFFF") {
+function drawLine(u1, v1, u2, v2, color = "#FFFFFF", pixelSize = 1) {
 
     const du = u2 - u1;
     const dv = v2 - v1;
@@ -91,8 +86,8 @@ function drawLine(u1, v1, u2, v2, color = "#FFFFFF") {
         ctx.fillRect(
             Math.round(u),
             Math.round(v),
-            1,
-            1
+            pixelSize,
+            pixelSize
         );
 
         u += uStep;
@@ -106,29 +101,45 @@ function drawWireframe(vertices, edges, color, camera) {
     ctx.strokeStyle = color;
     ctx.lineWidth = 2;
 
+    const pixelMode = activeButtonId === "btn_320x200";
+    const viewWidth = pixelMode ? WIDTH : canvas.width;
+    const viewHeight = pixelMode ? HEIGHT : canvas.height;
+
     for (const edge of edges) {
 
         const p1 = project(
             vertices[edge[0]],
-            camera
+            camera, viewWidth, viewHeight
         );
 
         const p2 = project(
             vertices[edge[1]],
-            camera
+            camera, viewWidth, viewHeight
         );
 
         if (p1 === null || p2 === null) {
             continue;
         }
 
-        drawLine(
-            p1.u * PIXEL_SIZE,
-            p1.v * PIXEL_SIZE,
-            p2.u * PIXEL_SIZE,
-            p2.v * PIXEL_SIZE,
-            color
-        );
+        if (activeButtonId === "btn_320x200") {
+            drawLine(
+                p1.u * PIXEL_SIZE,
+                p1.v * PIXEL_SIZE,
+                p2.u * PIXEL_SIZE,
+                p2.v * PIXEL_SIZE,
+                color,
+                PIXEL_SIZE,
+            );
+        }
+        else {
+            drawLine(
+                p1.u,
+                p1.v,
+                p2.u,
+                p2.v,
+                color
+            );
+        }
     }
 }
 
@@ -231,9 +242,9 @@ const roadModel = {
     ],
 
     edges: [
-        [0, 1],
+        // [0, 1],
         [1, 3],
-        [3, 2],
+        // [3, 2],
         [2, 0]
     ],
 
@@ -258,7 +269,7 @@ const laneModel = {
 
 const treeModel = {
     vertices: [
-        // Cube base: 1 unit wide, tall, and deep, resting on the ground.
+        // Cube base - 1 unit wide, tall, and deep, resting on the ground.
         { x: -0.5, y: 0, z: -0.5 }, // 0
         { x:  0.5, y: 0, z: -0.5 }, // 1
         { x:  0.5, y: 1, z: -0.5 }, // 2
@@ -411,6 +422,39 @@ function createScene() {
 
     scene = [];
 
+
+    scene.push({
+        model: mountainModel,
+        position: { x: -28, y: 0, z: 110 },
+        scale: 8,
+        color: "#64748B",
+        type: "mountain"
+    });
+
+    scene.push({
+        model: mountainModel,
+        position: { x: -80, y: 0, z: 110 },
+        scale: 10,
+        color: "#64748B",
+        type: "mountain"
+    });
+
+    scene.push({
+        model: mountainModel,
+        position: { x: 34, y: 0, z: 110 },
+        scale: 10,
+        color: "#64748B",
+        type: "mountain"
+    });
+
+    scene.push({
+        model: mountainModel,
+        position: { x: 84, y: 0, z: 110 },
+        scale: 8,
+        color: "#64748B",
+        type: "mountain"
+    });
+
     scene.push({
         model: roadModel,
         position: { x: 0, y: 0, z: 0 },
@@ -451,39 +495,6 @@ function createScene() {
         });
     }
 
-
-    scene.push({
-        model: mountainModel,
-        position: { x: -25, y: 0, z: 110 },
-        scale: 8,
-        color: "#64748B",
-        type: "mountain"
-    });
-
-    scene.push({
-        model: mountainModel,
-        position: { x: -80, y: 0, z: 110 },
-        scale: 10,
-        color: "#64748B",
-        type: "mountain"
-    });
-
-    scene.push({
-        model: mountainModel,
-        position: { x: 34, y: 0, z: 110 },
-        scale: 10,
-        color: "#64748B",
-        type: "mountain"
-    });
-
-    scene.push({
-        model: mountainModel,
-        position: { x: 84, y: 0, z: 110 },
-        scale: 8,
-        color: "#64748B",
-        type: "mountain"
-    });
-
     // Player car
     scene.push({
         model: carModel,
@@ -497,7 +508,10 @@ function createScene() {
 
 function drawGameWireframe() {
 
-    clearCanvas();
+    if (activeButtonId === "btn_wireframe")
+        clearCanvas();
+    else if (activeButtonId === "btn_320x200")
+        resetPixelArray();
 
     for (const object of scene) {
 
@@ -549,7 +563,7 @@ function animateWireframeScene() {
 }
 
 
-function wireFrameAnimationController(key) {
+function gameController(key) {
 
     const car = scene.find(
         object => object.model === carModel
@@ -585,10 +599,44 @@ function resetWireframe() {
     gameCamera.x = 0;
     gameCamera.y = 5;
     gameCamera.z = -10;
+
     createScene();
     drawGameWireframe();
 }
 
+
+//  320 x 200 px model related codes
+
+
+const pixelGrid = Array.from({ length: WIDTH }, () =>
+    Array(HEIGHT).fill("#050510")
+);
+
+function resetPixelArray() {
+    for (const column of pixelGrid) column.fill("#050510");
+    drawPxelArry();
+}
+
+function drawPxelArry() {
+    clearCanvas();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "#444444";
+
+    for (let v = 0; v < HEIGHT; v++) {
+        for (let u = 0; u < WIDTH; u++) {
+            ctx.fillStyle = pixelGrid[u][v];
+            ctx.fillRect(u * PIXEL_SIZE, v * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+            ctx.strokeRect(u * PIXEL_SIZE, v * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+        }
+    }
+}
+
+
+function resetGameCamera() {
+    gameCamera.x = 0;
+    gameCamera.y = 5;
+    gameCamera.z = -10;
+}
 
 function updateGameCamera(input) {
 
@@ -606,19 +654,28 @@ function updateGameCamera(input) {
             gameCamera.x += 0.1;
             break;
         case "KeyR":
-            gameCamera.x = 0;
-            gameCamera.y = 5;
-            gameCamera.z = -10;
+            resetGameCamera();
             break;
     }
 
+    gameCamera.z = Math.min(gameCamera.z, -6);
+    gameCamera.z = Math.max(-15, gameCamera.z);
 }
 
 
 // One loop owns animation; drawing and input handlers never start timers.
-function animate(animationMethod){
-    animationMethod();
-    requestAnimationFrame(() => animate(animationMethod));
+async function animate(animationMethod){
+    const sleep = (milliseconds) => new Promise(resolve => setTimeout(resolve, milliseconds));
+    
+
+    while (activeButtonId === "btn_wireframe" || activeButtonId === "btn_320x200") {
+
+        animationMethod();
+        showSpeed();
+
+
+        await sleep(30);
+    }
 }
 
 // Canvas and navigation control
@@ -638,13 +695,17 @@ function setMode(nextMode) {
 
     switch (nextMode) {
         case "btn_cube":
+            clearCanvas();
             drawCube();
             break;  
         case "btn_wireframe":
             createScene();
             animate(animateWireframeScene);
             break;
-        case "btn_300x200":
+        case "btn_320x200":
+            resetPixelArray();
+            createScene();
+            animate(animateWireframeScene);
             break;
         case "btn_triangle_fill":
             break;
@@ -653,6 +714,10 @@ function setMode(nextMode) {
 
             if (activeButtonId === "btn_cube") resetCube();
             else if (activeButtonId === "btn_wireframe") resetWireframe();
+            else if (activeButtonId === "btn_320x200"){
+                resetPixelArray();
+                resetGameCamera();
+            }
             break;
 
         default:
@@ -671,7 +736,13 @@ document.querySelectorAll("button.mode-button").forEach(button => {
     button.addEventListener("click", () => setMode(button.id));
 });
 
+const helpDialog = document.getElementById("helpDialog");
+document.getElementById("btn_help").addEventListener("click", () => helpDialog.showModal());
+document.getElementById("closeHelp").addEventListener("click", () => helpDialog.close());
+
+
 document.addEventListener("keydown", event => {
+    if (helpDialog.open) return;
     if (event.target?.matches("input, textarea, select, [contenteditable]")) return;
 
     event.preventDefault();
@@ -688,9 +759,8 @@ document.addEventListener("keydown", event => {
         }
     }
 
-    if (activeButtonId === "btn_wireframe") {
-        wireFrameAnimationController(event.code);
-        showSpeed();
+    if (activeButtonId === "btn_wireframe" || activeButtonId === "btn_320x200") {
+        gameController(event.code);
     }
     
 });

@@ -14,7 +14,13 @@
 
       <nav aria-label="Rendering modes">
         <div class="modes">
-          <button class="mode-button" type="button" id="btn_cube" data-mode="0" aria-pressed="true">
+          <button
+            class="mode-button"
+            type="button"
+            id="btn_cube"
+            data-mode="0"
+            aria-pressed="true"
+          >
             Cube
           </button>
           <button
@@ -29,11 +35,11 @@
           <button
             class="mode-button"
             type="button"
-            id="btn_300x200"
+            id="btn_320x200"
             data-mode="2"
             aria-pressed="false"
           >
-            300 x 200 px
+            320 x 200 px
           </button>
           <button
             class="mode-button"
@@ -46,6 +52,8 @@
           </button>
         </div>
         <button class="mode-button" type="button" id="btn_reset">Reset</button>
+        <button class="help-button" type="button" id="btn_help" aria-haspopup="dialog" aria-controls="helpDialog">Help</button>
+
         <output id="speedInfo">Speed: 0.5</output>
       </nav>
     </header>
@@ -53,6 +61,47 @@
     <main class="canvas-area">
       <canvas id="canvas" aria-label="Interactive 3D rendering"></canvas>
     </main>
+
+    <dialog id="helpDialog" aria-labelledby="helpTitle">
+      <div class="help-heading">
+        <h2 id="helpTitle">Road Runner controls</h2>
+        <button type="button" id="closeHelp" autofocus>Close</button>
+      </div>
+      <div class="help-content">
+
+      <section aria-labelledby="driving">
+        <h2 id="driving">Drive the car · Wireframe</h2>
+        <dl>
+          <div>
+            <dt><kbd>A</kbd> / <kbd>D</kbd></dt>
+            <dd>Steer left / right. The car stays within the road edges.</dd>
+          </div>
+          <div>
+            <dt><kbd>W</kbd> / <kbd>S</kbd></dt>
+            <dd>
+              Increase / decrease speed. Speed stays between 0.5 and the
+              configured maximum.
+            </dd>
+          </div>
+        </dl>
+        <p>The navigation bar shows your current speed.</p>
+      </section>
+      <section aria-labelledby="camera">
+        <h2 id="camera">Move the camera · Cube and Wireframe</h2>
+        <dl>
+          <div>
+            <dt><kbd>↑</kbd> / <kbd>↓</kbd></dt>
+            <dd>Move the camera forward / backward.</dd>
+          </div>
+          <div>
+            <dt><kbd>←</kbd> / <kbd>→</kbd></dt>
+            <dd>Move the camera left / right.</dd>
+          </div>
+        </dl>
+        <p>Adjust camera position using the arrow keys.</p>
+      </section>
+      </div>
+    </dialog>
 
     <script src="script.js"></script>
   </body>
