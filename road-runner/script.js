@@ -248,6 +248,11 @@ const roadModel = {
         [2, 0]
     ],
 
+    triangles: [
+        [0, 2, 1, "#666666"],
+        [1, 2, 3, "#666666"]
+    ],
+
     color: "#666666"
 };
 
@@ -255,12 +260,23 @@ const roadModel = {
 const laneModel = {
 
     vertices: [
-        { x: 0, y: 0, z: -1 },
-        { x: 0, y: 0, z:  1 }
+
+        { x: -0.05, y: 0.01, z: -1 }, // 0
+        { x:  0.05, y: 0.01, z: -1 }, // 1
+        { x: -0.05, y: 0.01, z:  1 }, // 2
+        { x:  0.05, y: 0.01, z:  1 }  // 3
     ],
 
     edges: [
-        [0, 1]
+        [0, 1],
+        [1, 3],
+        [3, 2],
+        [2, 0]
+    ],
+
+    triangles: [
+        [0, 2, 1, "#FFFFFF"],
+        [1, 2, 3, "#FFFFFF"]
     ],
 
     color: "#FFFFFF"
@@ -296,6 +312,35 @@ const treeModel = {
         [8, 9], [9, 10], [10, 11], [11, 8],
         [8, 12], [9, 12], [10, 12], [11, 12]
     ],
+
+    triangles: [
+
+        // Trunksss
+        // rear
+        [0, 2, 1, "#92400E"],
+        [0, 3, 2, "#92400E"],
+
+        //front
+        [4, 5, 6, "#92400E"],
+        [4, 6, 7, "#92400E"],
+
+        // left
+        [0, 7, 3, "#78350F"],
+        [0, 4, 7, "#78350F"],
+
+        // right
+        [1, 6, 5, "#78350F"],
+        [1, 2, 6, "#78350F"],
+
+        // Canopy
+        [8, 12, 9, "#22C55E"],
+        [9, 12, 10, "#16A34A"],
+        [10, 12, 11, "#15803D"],
+        [11, 12, 8, "#166534"]
+
+    ],
+
+
     color: "#228B22"
 };
 
@@ -309,10 +354,20 @@ const mountainModel = {
         { x: -3, y: 0, z: 6 }, // 3
         { x:  0, y: 4, z: 3 }  // 4: apex above the square's center
     ],
+
     edges: [
         [0, 1], [1, 2], [2, 3], [3, 0],
         [0, 4], [1, 4], [2, 4], [3, 4]
     ],
+
+    triangles: [
+        [0, 4, 1, "#64748B"],
+        [1, 4, 2, "#94A3B8"],
+        [2, 4, 3, "#475569"],
+        [3, 4, 0, "#64748B"]
+
+    ],
+
     color: "#64748B"
 };
 
@@ -402,6 +457,59 @@ const carModel = {
         [20, 21], [21, 23], [23, 22], [22, 20]
     ],
 
+
+    triangles: [
+
+        // Body: rear
+        [0, 2, 1, "#2563EB"],
+        [1, 2, 3, "#2563EB"],
+
+        // Body: front
+        [4, 5, 6, "#2563EB"],
+        [5, 7, 6, "#2563EB"],
+
+        // Body: left
+        [0, 4, 2, "#1D4ED8"],
+        [2, 4, 6, "#1D4ED8"],
+
+        // Body: right
+        [1, 3, 5, "#1D4ED8"],
+        [3, 7, 5, "#1D4ED8"],
+
+        // Body: top
+        [2, 6, 3, "#3B82F6"],
+        [3, 6, 7, "#3B82F6"],
+
+        // Roof: rear windshield
+        [8, 10, 9, "#93C5FD"],
+        [9, 10, 11, "#93C5FD"],
+
+        // Roof: top
+        [10, 12, 11, "#60A5FA"],
+        [11, 12, 13, "#60A5FA"],
+
+        // Roof: front windshield
+        [12, 14, 13, "#93C5FD"],
+        [13, 14, 15, "#93C5FD"],
+
+        // Roof: left
+        [8, 14, 10, "#1D4ED8"],
+        [10, 14, 12, "#1D4ED8"],
+
+        // Roof: right
+        [9, 11, 15, "#1D4ED8"],
+        [11, 13, 15, "#1D4ED8"],
+
+        // Left rear light
+        [16, 18, 17, "#FF0000"],
+        [17, 18, 19, "#FF0000"],
+
+        // Right rear light
+        [20, 22, 21, "#FF0000"],
+        [21, 22, 23, "#FF0000"]
+
+    ],
+
     color: "#2563EB"
 };
 
@@ -476,7 +584,7 @@ function createScene() {
     }
 
     // Trees
-    for (let z = 5; z <= 95; z += 10) {
+    for (let z = 5; z <= 95; z += 20) {
 
         scene.push({
             model: treeModel,
@@ -537,7 +645,7 @@ function drawGameWireframe() {
 }
 
 
-function animateWireframeScene() {
+function animateObjects() {
 
     for (const object of scene) {
 
@@ -559,7 +667,12 @@ function animateWireframeScene() {
         }
     }
 
-    drawGameWireframe();
+    if (activeButtonId === "btn_wireframe" || activeButtonId === "btn_320x200") {
+        drawGameWireframe();
+    }
+    else if (activeButtonId === "btn_triangle_fill") {
+        drawGameTriangles();
+    }
 }
 
 
@@ -631,6 +744,112 @@ function drawPxelArry() {
     }
 }
 
+//  Rendering with triangles
+
+// Returns double the signed area
+const edgeFunction = (a, b, c) => {
+  return (b.u - a.u) * (c.v - a.v) - (b.v - a.v) * (c.u - a.u);
+};
+
+const drawTriangle = (A, B, C, color) => { 
+    // Calculate the edge function for the whole triangle (ABC)
+    const ABC = edgeFunction(A, B, C);
+
+    // Our nifty trick: Don't bother drawing the triangle if it's back facing
+    if (ABC < 0) {
+        return;
+    }
+
+    // Initialise our point
+    const P = { u: 0, v: 0 };
+
+    // Get the bounding box of the triangle
+    const minX = Math.min(A.u, B.u, C.u);
+    const minY = Math.min(A.v, B.v, C.v);
+    const maxX = Math.max(A.u, B.u, C.u);
+    const maxY = Math.max(A.v, B.v, C.v);
+
+    // Loop through all the pixels of the bounding box
+    ctx.fillStyle = color;
+
+    for (P.v = minY; P.v < maxY; P.v++) {
+        for (P.u = minX; P.u < maxX; P.u++) {
+        // Calculate our edge functions
+        const ABP = edgeFunction(A, B, P);
+        const BCP = edgeFunction(B, C, P);
+        const CAP = edgeFunction(C, A, P);
+
+        // Normalise the edge functions by dividing by the total area to get the barycentric coordinates
+        // const weightA = BCP / ABC;
+        // const weightB = CAP / ABC;
+        // const weightC = ABP / ABC;
+
+        // If all the edge functions are positive, the point is inside the triangle
+        if (ABP >= 0 && BCP >= 0 && CAP >= 0) {
+            // Interpolate the colours at point P
+            // const r = colourA.r * weightA + colourB.r * weightB + colourC.r * weightC;
+            // const g = colourA.g * weightA + colourB.g * weightB + colourC.g * weightC;
+            // const b = colourA.b * weightA + colourB.b * weightB + colourC.b * weightC;
+            // const colourP = new Colour(r, g, b);
+
+            // Draw the pixel
+            // setPixel(P.u, P.v, color);
+
+            ctx.fillRect(P.u, P.v, 1, 1);
+        }
+        }
+    }
+}
+
+
+function drawGameTriangles() {
+
+    clearCanvas();
+
+    // Iterate through every object.
+    for (const object of scene) {
+
+        // Transform the model vertices.
+        const worldVertices =
+            object.model.vertices.map(vertex =>
+                transformVertex(
+                    vertex,
+                    object.position,
+                    object.scale
+                )
+            );
+
+        // Project the vertices.
+        const projectedVertices =
+            worldVertices.map(vertex =>
+                project(
+                    vertex,
+                    gameCamera
+                )
+            );
+
+        // Draw the object's triangles.
+        for (const triangle of object.model.triangles) {
+
+            const p1 = projectedVertices[triangle[0]];
+            const p2 = projectedVertices[triangle[1]];
+            const p3 = projectedVertices[triangle[2]];
+
+            // Ignore triangles behind the camera.
+            if (!p1 || !p2 || !p3) {
+                continue;
+            }
+
+            drawTriangle(
+                p1,
+                p2,
+                p3,
+                triangle[3]
+            );
+        }
+    }
+}
+
 
 function resetGameCamera() {
     gameCamera.x = 0;
@@ -663,19 +882,26 @@ function updateGameCamera(input) {
 }
 
 
-// One loop owns animation; drawing and input handlers never start timers.
-async function animate(animationMethod){
-    const sleep = (milliseconds) => new Promise(resolve => setTimeout(resolve, milliseconds));
-    
+// Keep one pending timer; mode changes cancel it before starting another.
+let animationTimer = null;
 
-    while (activeButtonId === "btn_wireframe" || activeButtonId === "btn_320x200") {
-
-        animationMethod();
-        showSpeed();
-
-
-        await sleep(30);
+function stopAnimation() {
+    if (animationTimer !== null) {
+        clearTimeout(animationTimer);
+        animationTimer = null;
     }
+}
+
+function animate(animationMethod) {
+    stopAnimation();
+    if (!["btn_wireframe", "btn_320x200", "btn_triangle_fill"].includes(activeButtonId)) return;
+
+    animationMethod();
+    showSpeed();
+    animationTimer = setTimeout(() => {
+        animationTimer = null;
+        animate(animationMethod);
+    }, 30);
 }
 
 // Canvas and navigation control
@@ -687,6 +913,7 @@ function fitCanvas() {
 }
 
 function setMode(nextMode) {
+    stopAnimation();
     clearCanvas();
     
     activeButtonId = nextMode !== "btn_reset" ? nextMode : activeButtonId;
@@ -700,14 +927,14 @@ function setMode(nextMode) {
             break;  
         case "btn_wireframe":
             createScene();
-            animate(animateWireframeScene);
             break;
         case "btn_320x200":
             resetPixelArray();
             createScene();
-            animate(animateWireframeScene);
             break;
         case "btn_triangle_fill":
+            createScene();
+            drawGameTriangles();
             break;
         case "btn_reset":
             clearCanvas();
@@ -718,6 +945,7 @@ function setMode(nextMode) {
                 resetPixelArray();
                 resetGameCamera();
             }
+            else if (activeButtonId === "btn_triangle_fill") resetGameCamera();
             break;
 
         default:
@@ -729,6 +957,7 @@ function setMode(nextMode) {
     });
 
     fitCanvas();
+    animate(animateObjects);
 }
 
 
@@ -759,7 +988,7 @@ document.addEventListener("keydown", event => {
         }
     }
 
-    if (activeButtonId === "btn_wireframe" || activeButtonId === "btn_320x200") {
+    if (activeButtonId === "btn_wireframe" || activeButtonId === "btn_320x200" || activeButtonId === "btn_triangle_fill") {
         gameController(event.code);
     }
     
