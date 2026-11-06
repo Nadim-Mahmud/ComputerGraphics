@@ -1,9 +1,9 @@
-# Image2CubeModel — Mount Saba 3D
+# Image2CubeModel - Mount Saba 3D
 
 A 3D island scene built from a satellite image and height map. Rendered from scratch: vertices, edges, triangles, pinhole camera. WebGL used for parallel rasterization.
 
-- **Live demo:** [Mount Saba](https://nadim-mahmud.github.io/ComputerGraphics/Image2CubeModel/)
-- **Demo video:** TODO( Youtube video)
+- **Live demo:** [Mount Saba Webview](https://nadim-mahmud.github.io/ComputerGraphics/Image2CubeModel/)
+- **Demo video:** [View Link](https://youtu.be/EuOInRfqIqw)
 
 ---
 
