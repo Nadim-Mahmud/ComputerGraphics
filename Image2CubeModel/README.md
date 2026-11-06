@@ -6,6 +6,25 @@ A 3D island scene built from a satellite image and height map. Rendered from scr
 - **Demo video:** [View Link](https://youtu.be/EuOInRfqIqw)
 
 ---
+## Overview
+
+Image2CubeModel turns a 2D satellite image and a height map into an interactive 3D scene made of cubes. The target is **Mount Saba**, a volcanic island in the Caribbean.
+
+The image is sampled down to a grid. Each grid cell becomes one cube column: the satellite pixel sets its color, the height map sets its height. Result is a blocky, voxel-style island.
+
+The scene is built up in five levels, from a single cube (L0) to the island with moving clouds and a rippling sea (L4). Each level adds one computer graphics idea:
+
+- 3D objects as vertices, edges and triangles
+- Pinhole camera and perspective projection
+- Model → world → camera → screen transforms
+- Per-vertex color interpolation
+- Image sampling
+- Bezier curve animation (clouds)
+- Sine-wave animation (sea)
+
+The math (matrices, camera, projection) is written from scratch in [math.js](math.js). Scene building and rendering are in [index.js](index.js). WebGL is used only to rasterize triangles in parallel on the GPU.
+
+---
 
 ## Design Plans
 
