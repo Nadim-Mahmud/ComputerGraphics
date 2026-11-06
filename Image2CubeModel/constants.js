@@ -17,7 +17,7 @@ const CAMERA_UP = [0, 1, 0];
 const CAMERA_MOVE_STEP = 0.25; // Distance moved for each arrow-key press/repeat.
 
 // Level 1: procedural landscape.
-const GRID_SIZE = 200;          // Starting cube count per side: GRID_SIZE x GRID_SIZE.
+const GRID_SIZE = 1000;          // Starting cube count per side: GRID_SIZE x GRID_SIZE.
                                 // Controls ALL voxels, including image sampling.
                                 // Set once here; refresh the page after changing it.
 const WORLD_SIZE = 200;         // Landscape width/depth. Fixed, so more cubes = finer

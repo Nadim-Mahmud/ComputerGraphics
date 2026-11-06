@@ -405,6 +405,7 @@ function useCubeProgram() {
 
 function useLandscapeProgram(instanceBuffer) {
   resetAttributes();
+  
   gl.useProgram(landscapeProgram);
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.enableVertexAttribArray(landscapeLoc.position);
