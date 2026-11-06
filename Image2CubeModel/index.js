@@ -241,6 +241,7 @@ const landscapeVertexSource = /* glsl */  `
   uniform float uTime;         // seconds, for the water ripple
   uniform float uWaterLevel;   // cubes shorter than this are water (0 = none)
   uniform float uCellSize;     // cube width/depth = WORLD_SIZE / gridSize
+  uniform float uCornerBlend;  // 1 = per-corner colors (level 1), 0 = flat image colors
 
   varying vec3 vNormal;
   varying vec3 vColor;
@@ -283,8 +284,17 @@ const landscapeVertexSource = /* glsl */  `
     vec3 local = aPosition;   // cubeVertices already go y: 0..1
 
     // Vertex color: the cube's color, each corner a bit different.
-    float corner = ((aPosition.x + 0.5) + (aPosition.z + 0.5)) * 0.5;   // 0..1
-    vColor = aColor * (0.75 + 0.5 * corner) * (1.0 + 0.15 * wave);
+    // Level 1c: each of the 8 corners gets its own color, made from the
+    // cube's color by swapping channels (gbr / brg). Colors are assigned per
+    // vertex; the rasterizer interpolates them across every face.
+    vec3 c = vec3(aPosition.x + 0.5, aPosition.y, aPosition.z + 0.5);   // 0 or 1 per axis
+    vec3 cornerColor = mix(
+      mix(aColor, aColor.gbr, c.x),
+      mix(aColor.brg, aColor, c.z),
+      0.25 + 0.5 * c.y);
+    vec3 baseColor = mix(aColor, cornerColor, uCornerBlend);
+    float corner = (c.x + c.z) * 0.5;   // 0..1
+    vColor = baseColor * (0.75 + 0.5 * corner) * (1.0 + 0.15 * wave);
 
     vNormal = aNormal;   // only axis-aligned scale/translate: normals unchanged
 
@@ -372,6 +382,7 @@ const landscapeLoc = {
   time: gl.getUniformLocation(landscapeProgram, 'uTime'),
   waterLevel: gl.getUniformLocation(landscapeProgram, 'uWaterLevel'),
   cellSize: gl.getUniformLocation(landscapeProgram, 'uCellSize'),
+  cornerBlend: gl.getUniformLocation(landscapeProgram, 'uCornerBlend'),
 };
 
 // Attribute state is global, not per program, so reset it before each level.
@@ -685,6 +696,7 @@ function drawLandscape(now, aspect, cubes = levelCubes[currentLevel]) {
   useLandscapeProgram(cubes.buffer);
   gl.uniform1f(landscapeLoc.brightness, brightness);
   gl.uniform1f(landscapeLoc.cellSize, cellSize());
+  gl.uniform1f(landscapeLoc.cornerBlend, currentLevel === 1 ? 1 : 0);
   gl.uniform1f(landscapeLoc.time, now / 1000);
   gl.uniform1f(landscapeLoc.waterLevel, currentLevel === 4 ? WATER_LEVEL : 0);
   const fov = aspect < 1
