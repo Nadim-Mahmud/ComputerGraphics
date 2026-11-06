@@ -4,6 +4,7 @@ A 3D island scene built from a satellite image and height map. Rendered from scr
 
 - **Live demo:** [Mount Saba Webview](https://nadim-mahmud.github.io/ComputerGraphics/Image2CubeModel/)
 - **Demo video:** [View Link](https://youtu.be/EuOInRfqIqw)
+- **Local Run:** Need to run (`python3 -m http.server`) local server at the project root and open [http://localhost:8000/index.html](http://localhost:8000/index.html)
 
 ---
 ## Overview
