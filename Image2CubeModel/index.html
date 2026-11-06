@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Saba Cube Landscape</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: system-ui, sans-serif;
+        color: #f3f5f7;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: black;
+        overflow: hidden;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      .project-info {
+        position: fixed;
+        top: max(24px, env(safe-area-inset-top));
+        left: max(20px, env(safe-area-inset-left));
+        max-width: min(380px, calc(100% - 112px));
+        padding: 14px 16px;
+        border-radius: 14px;
+        background: #0a0e1478;
+        backdrop-filter: blur(6px);
+        pointer-events: none;
+        text-shadow: 0 2px 12px #000;
+      }
+      .project-label {
+        margin: 0 0 5px;
+        color: #aeb7c4;
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(24px, 4vw, 32px);
+        font-weight: 600;
+        letter-spacing: -0.03em;
+        line-height: 1.15;
+      }
+      .developer {
+        margin: 9px 0 0;
+        color: #c4cbd5;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      button {
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+      }
+      button:focus-visible {
+        outline: 2px solid #aecbf5;
+        outline-offset: 4px;
+      }
+      .info-button {
+        position: fixed;
+        top: max(24px, env(safe-area-inset-top));
+        right: max(28px, env(safe-area-inset-right));
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border: 1px solid #ffffff50;
+        border-radius: 50%;
+        background: transparent;
+      }
+      .info-button:hover {
+        border-color: #fff;
+        background: #ffffff0d;
+      }
+      .info-button svg {
+        width: 20px;
+        height: 20px;
+      }
+      .level-info {
+        margin: 9px 0 0;
+        max-width: 340px;
+        color: #c4cbd5;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      .level-picker {
+        position: fixed;
+        top: max(24px, env(safe-area-inset-top));
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 4px;
+        padding: 4px;
+        border: 1px solid #ffffff50;
+        border-radius: 999px;
+        background: #0a0e1480;
+        backdrop-filter: blur(6px);
+      }
+      .level-button {
+        width: 44px;
+        height: 36px;
+        padding: 0;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .level-button:hover {
+        background: #ffffff1a;
+      }
+      .level-button[aria-pressed="true"] {
+        background: #f3f5f7;
+        color: #15191f;
+      }
+      .zoom-controls {
+        position: fixed;
+        right: max(28px, env(safe-area-inset-right));
+        bottom: max(24px, env(safe-area-inset-bottom));
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .zoom-controls button {
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border: 1px solid #ffffff50;
+        border-radius: 50%;
+        background: #0a0e1480;
+        font-size: 24px;
+      }
+      .zoom-controls button:hover {
+        border-color: #fff;
+      }
+      dialog {
+        width: min(420px, calc(100% - 32px));
+        max-height: calc(100dvh - 32px);
+        padding: 28px;
+        border: 1px solid #ffffff26;
+        border-radius: 18px;
+        background: #15191ff5;
+        color: #f3f5f7;
+        box-shadow: 0 24px 80px #0009;
+        overflow-y: auto;
+      }
+      dialog::backdrop {
+        background: #0009;
+        backdrop-filter: blur(5px);
+      }
+      .help-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      h2 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      .close-button {
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        font-size: 26px;
+      }
+      .close-button:hover {
+        background: #ffffff12;
+      }
+      .help-intro,
+      .help-note {
+        color: #aeb7c4;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      .help-intro {
+        margin: 10px 0 20px;
+      }
+      kbd {
+        padding: 1px 5px;
+        border: 1px solid #ffffff30;
+        border-radius: 4px;
+        font: inherit;
+        white-space: nowrap;
+      }
+      .help-list {
+        margin: 0;
+        padding-left: 18px;
+        color: #aeb7c4;
+        font-size: 13px;
+        line-height: 1.7;
+      }
+      .help-note {
+        margin: 18px 0 0;
+      }
+      @media (max-width: 480px) {
+        .project-info {
+          top: max(18px, env(safe-area-inset-top));
+          left: max(18px, env(safe-area-inset-left));
+        }
+        .level-picker {
+          top: auto;
+          bottom: max(16px, env(safe-area-inset-bottom));
+        }
+        .info-button {
+          top: max(18px, env(safe-area-inset-top));
+          right: max(18px, env(safe-area-inset-right));
+        }
+        dialog {
+          padding: 22px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="c" aria-label="3D cube scene"></canvas>
+    <header class="project-info">
+      <h1>Saba Island Landscape</h1>
+      <p class="developer">Dev: Nadim Mahmud</p>
+      <p class="level-info" id="level-info"></p>
+    </header>
+    <div class="level-picker" role="group" aria-label="Level">
+      <button
+        class="level-button"
+        type="button"
+        data-level="0"
+        aria-pressed="true"
+      >
+        0
+      </button>
+      <button
+        class="level-button"
+        type="button"
+        data-level="1"
+        aria-pressed="false"
+      >
+        1
+      </button>
+      <button
+        class="level-button"
+        type="button"
+        data-level="2"
+        aria-pressed="false"
+      >
+        2
+      </button>
+      <button
+        class="level-button"
+        type="button"
+        data-level="3"
+        aria-pressed="false"
+      >
+        3
+      </button>
+      <button
+        class="level-button"
+        type="button"
+        data-level="4"
+        aria-pressed="false"
+      >
+        4
+      </button>
+    </div>
+    <button
+      class="info-button"
+      id="help-button"
+      type="button"
+      aria-label="Camera controls and help"
+      aria-haspopup="dialog"
+      aria-controls="camera-help"
+      aria-expanded="false"
+      title="Camera controls"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <path d="M12 10v7" />
+        <circle cx="12" cy="6.5" r="1" fill="currentColor" stroke="none" />
+      </svg>
+    </button>
+    <div class="zoom-controls">
+      <button id="zoom-in" type="button" aria-label="Zoom in" title="Zoom in">+</button>
+      <button id="zoom-out" type="button" aria-label="Zoom out" title="Zoom out">&minus;</button>
+    </div>
+    <dialog
+      id="camera-help"
+      aria-labelledby="help-title"
+      aria-describedby="help-description"
+    >
+      <div class="help-heading">
+        <h2 id="help-title">Controls</h2>
+        <button
+          class="close-button"
+          id="close-help"
+          type="button"
+          aria-label="Close help"
+          autofocus
+        >
+          &times;
+        </button>
+      </div>
+      <p class="help-intro" id="help-description">
+        Level 0: <kbd>&larr;</kbd> / <kbd>&rarr;</kbd> move left and right,
+        <kbd>&uarr;</kbd> / <kbd>&darr;</kbd> move forward and backward.
+      </p>
+      <ul class="help-list">
+        <li>
+          <strong>Levels 1&ndash;4:</strong> <kbd>&larr;</kbd> /
+          <kbd>&rarr;</kbd> orbit around the landscape.
+        </li>
+        <li>
+          <strong>Move closer / farther:</strong> <kbd>&uarr;</kbd> /
+          <kbd>&darr;</kbd> (camera height stays the same).
+        </li>
+        <li>
+          <strong>Zoom:</strong> the <kbd>+</kbd> / <kbd>&minus;</kbd>
+          buttons (bottom right) or the mouse wheel.
+        </li>
+        <li>
+          <strong>Brightness:</strong> keyboard <kbd>+</kbd> /
+          <kbd>-</kbd> (levels 1&ndash;4).
+        </li>
+        <li>
+          <strong>Levels:</strong> 0 cube, 1 random landscape, 2 island from
+          images, 3 island with clouds, 4 island with clouds and rippling sea.
+        </li>
+      </ul>
+      <p class="help-note">
+        Press <kbd>Esc</kbd> or click outside this popup to close it.
+      </p>
+    </dialog>
+    <script src="constants.js" defer></script>
+    <script src="math.js" defer></script>
+    <script src="index.js" defer></script>
+  </body>
+</html>
